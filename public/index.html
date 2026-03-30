@@ -1,0 +1,378 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>MIAS MDX — Music Bot by 𝑷𝑹𝑬𝑪𝑰𝑶𝑼𝑺 x</title>
+  <style>
+    * { margin: 0; padding: 0; box-sizing: border-box; }
+
+    body {
+      background: #0a0a0f;
+      color: #fff;
+      font-family: 'Segoe UI', sans-serif;
+      min-height: 100vh;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      overflow: hidden;
+    }
+
+    /* Animated background */
+    body::before {
+      content: '';
+      position: fixed;
+      top: -50%;
+      left: -50%;
+      width: 200%;
+      height: 200%;
+      background: radial-gradient(ellipse at center, #1a0533 0%, #0a0a0f 60%);
+      animation: bgPulse 6s ease-in-out infinite alternate;
+      z-index: 0;
+    }
+
+    @keyframes bgPulse {
+      0%   { transform: scale(1);   opacity: 0.8; }
+      100% { transform: scale(1.1); opacity: 1;   }
+    }
+
+    .container {
+      position: relative;
+      z-index: 1;
+      text-align: center;
+      max-width: 480px;
+      width: 90%;
+      padding: 20px;
+    }
+
+    /* Music visualizer bars */
+    .visualizer {
+      display: flex;
+      align-items: flex-end;
+      justify-content: center;
+      gap: 5px;
+      height: 60px;
+      margin-bottom: 30px;
+    }
+
+    .bar {
+      width: 6px;
+      background: linear-gradient(to top, #9b59b6, #e056fd);
+      border-radius: 3px;
+      animation: bounce 1.2s ease-in-out infinite;
+    }
+
+    .bar:nth-child(1)  { animation-delay: 0.0s; }
+    .bar:nth-child(2)  { animation-delay: 0.1s; }
+    .bar:nth-child(3)  { animation-delay: 0.2s; }
+    .bar:nth-child(4)  { animation-delay: 0.3s; }
+    .bar:nth-child(5)  { animation-delay: 0.4s; }
+    .bar:nth-child(6)  { animation-delay: 0.3s; }
+    .bar:nth-child(7)  { animation-delay: 0.2s; }
+    .bar:nth-child(8)  { animation-delay: 0.1s; }
+    .bar:nth-child(9)  { animation-delay: 0.0s; }
+
+    @keyframes bounce {
+      0%, 100% { height: 8px;  }
+      50%       { height: 50px; }
+    }
+
+    .visualizer.paused .bar { animation-play-state: paused; }
+
+    /* Logo */
+    .logo {
+      font-size: 2.8rem;
+      font-weight: 900;
+      letter-spacing: 4px;
+      background: linear-gradient(135deg, #e056fd, #9b59b6, #fff);
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
+      background-clip: text;
+      margin-bottom: 6px;
+    }
+
+    .owner {
+      font-size: 0.85rem;
+      color: #9b59b6;
+      letter-spacing: 2px;
+      margin-bottom: 30px;
+    }
+
+    /* Music prompt card */
+    .card {
+      background: rgba(255, 255, 255, 0.04);
+      border: 1px solid rgba(155, 89, 182, 0.3);
+      border-radius: 20px;
+      padding: 30px 25px;
+      backdrop-filter: blur(10px);
+      margin-bottom: 20px;
+    }
+
+    .card h2 {
+      font-size: 1.3rem;
+      color: #e056fd;
+      margin-bottom: 10px;
+    }
+
+    .card p {
+      color: #aaa;
+      font-size: 0.95rem;
+      line-height: 1.6;
+    }
+
+    /* Buttons */
+    .btn-group {
+      display: flex;
+      gap: 12px;
+      justify-content: center;
+      margin: 20px 0;
+    }
+
+    .btn {
+      padding: 14px 28px;
+      border: none;
+      border-radius: 50px;
+      font-size: 1rem;
+      font-weight: 700;
+      cursor: pointer;
+      transition: all 0.2s ease;
+      letter-spacing: 1px;
+    }
+
+    .btn-yes {
+      background: linear-gradient(135deg, #9b59b6, #e056fd);
+      color: #fff;
+    }
+
+    .btn-yes:hover {
+      transform: scale(1.05);
+      box-shadow: 0 0 20px rgba(224, 86, 253, 0.5);
+    }
+
+    .btn-no {
+      background: rgba(255,255,255,0.07);
+      color: #aaa;
+      border: 1px solid rgba(255,255,255,0.15);
+    }
+
+    .btn-no:hover {
+      background: rgba(255,255,255,0.12);
+      color: #fff;
+      transform: scale(1.03);
+    }
+
+    /* Now playing */
+    #player {
+      display: none;
+      background: rgba(155, 89, 182, 0.1);
+      border: 1px solid rgba(155, 89, 182, 0.4);
+      border-radius: 20px;
+      padding: 24px;
+      margin-top: 16px;
+      animation: fadeIn 0.4s ease;
+    }
+
+    @keyframes fadeIn {
+      from { opacity: 0; transform: translateY(10px); }
+      to   { opacity: 1; transform: translateY(0); }
+    }
+
+    #player .song-title {
+      font-size: 1.2rem;
+      font-weight: 700;
+      color: #e056fd;
+      margin-bottom: 4px;
+    }
+
+    #player .song-artist {
+      font-size: 0.9rem;
+      color: #aaa;
+      margin-bottom: 16px;
+    }
+
+    #player .song-genre {
+      display: inline-block;
+      background: rgba(155, 89, 182, 0.2);
+      border: 1px solid rgba(155, 89, 182, 0.4);
+      border-radius: 20px;
+      font-size: 0.75rem;
+      padding: 3px 12px;
+      color: #c77dff;
+      margin-bottom: 16px;
+    }
+
+    .player-controls {
+      display: flex;
+      gap: 10px;
+      justify-content: center;
+      flex-wrap: wrap;
+    }
+
+    .ctrl-btn {
+      padding: 10px 20px;
+      border: none;
+      border-radius: 30px;
+      cursor: pointer;
+      font-size: 0.9rem;
+      font-weight: 600;
+      transition: all 0.2s ease;
+    }
+
+    .ctrl-next {
+      background: linear-gradient(135deg, #9b59b6, #e056fd);
+      color: #fff;
+    }
+
+    .ctrl-next:hover { transform: scale(1.05); box-shadow: 0 0 15px rgba(224,86,253,0.4); }
+
+    .ctrl-stop {
+      background: rgba(255,255,255,0.07);
+      color: #aaa;
+      border: 1px solid rgba(255,255,255,0.15);
+    }
+
+    .ctrl-stop:hover { background: rgba(255,50,50,0.2); color: #ff6b6b; border-color: #ff6b6b; }
+
+    /* Decline message */
+    #decline-msg {
+      display: none;
+      color: #9b59b6;
+      font-size: 0.95rem;
+      margin-top: 12px;
+      animation: fadeIn 0.4s ease;
+    }
+
+    /* Footer */
+    .footer {
+      margin-top: 30px;
+      font-size: 0.75rem;
+      color: #555;
+      letter-spacing: 1px;
+    }
+  </style>
+</head>
+<body>
+
+<div class="container">
+
+  <!-- Animated visualizer -->
+  <div class="visualizer paused" id="visualizer">
+    <div class="bar"></div>
+    <div class="bar"></div>
+    <div class="bar"></div>
+    <div class="bar"></div>
+    <div class="bar"></div>
+    <div class="bar"></div>
+    <div class="bar"></div>
+    <div class="bar"></div>
+    <div class="bar"></div>
+  </div>
+
+  <div class="logo">MIAS MDX</div>
+  <div class="owner">by 𝑷𝑹𝑬𝑪𝑰𝑶𝑼𝑺 x</div>
+
+  <!-- Prompt card -->
+  <div class="card" id="prompt-card">
+    <h2>🎵 Welcome!</h2>
+    <p>Hey there! Would you like to listen to some music while you're here?</p>
+  </div>
+
+  <!-- Yes / No buttons -->
+  <div class="btn-group" id="btn-group">
+    <button class="btn btn-yes" onclick="startMusic()">🎧 Yes, Play Music</button>
+    <button class="btn btn-no"  onclick="declineMusic()">Maybe Later</button>
+  </div>
+
+  <!-- Now playing panel -->
+  <div id="player">
+    <div class="song-title" id="song-title">—</div>
+    <div class="song-artist" id="song-artist">—</div>
+    <div class="song-genre" id="song-genre">—</div>
+    <div class="player-controls">
+      <button class="ctrl-btn ctrl-next" onclick="nextSong()">⏭ Next Song</button>
+      <button class="ctrl-btn ctrl-stop" onclick="stopMusic()">⏹ Stop</button>
+    </div>
+  </div>
+
+  <!-- Declined -->
+  <div id="decline-msg">😊 No worries! Enjoy your visit.</div>
+
+  <div class="footer">MIAS MDX &copy; 2024 &nbsp;|&nbsp; 𝑷𝑹𝑬𝑪𝑰𝑶𝑼𝑺 x</div>
+</div>
+
+<script>
+  const songs = [
+    { title: "Blinding Lights",    artist: "The Weeknd",               genre: "Pop / Synth-pop",    url: "https://www.youtube.com/watch?v=4NRXx6U8ABQ" },
+    { title: "Essence",            artist: "Wizkid ft. Tems",           genre: "Afrobeats",          url: "https://www.youtube.com/watch?v=vDF-U3ZOAxY" },
+    { title: "Cruel Summer",       artist: "Taylor Swift",              genre: "Pop",                url: "https://www.youtube.com/watch?v=ic8j13piAhQ" },
+    { title: "Ye",                 artist: "Burna Boy",                 genre: "Afrobeats",          url: "https://www.youtube.com/watch?v=1Cr0kqFhP0U" },
+    { title: "As It Was",          artist: "Harry Styles",              genre: "Pop",                url: "https://www.youtube.com/watch?v=H5v3kku4y6Q" },
+    { title: "Love Nwantiti",      artist: "CKay",                      genre: "Afropop",            url: "https://www.youtube.com/watch?v=PFRjKjEf0s0" },
+    { title: "Creepin'",           artist: "Metro Boomin ft. The Weeknd", genre: "R&B / Hip-Hop",  url: "https://www.youtube.com/watch?v=cNtXSGVqAYo" },
+    { title: "Calm Down",          artist: "Rema ft. Selena Gomez",     genre: "Afrobeats",          url: "https://www.youtube.com/watch?v=Y3S2MflEMiM" },
+    { title: "Flowers",            artist: "Miley Cyrus",               genre: "Pop",                url: "https://www.youtube.com/watch?v=G7KNmW9a75Y" },
+    { title: "Ojuelegba",          artist: "Wizkid",                    genre: "Afrobeats",          url: "https://www.youtube.com/watch?v=G_ZhFPgNT0I" },
+    { title: "Vampire",            artist: "Olivia Rodrigo",            genre: "Pop / Alt-Rock",     url: "https://www.youtube.com/watch?v=RlPNh_PBZb4" },
+    { title: "Kwaku the Traveller",artist: "Black Sherif",              genre: "Afrobeats / Hip-Hop",url: "https://www.youtube.com/watch?v=OvlHb2OeWcU" },
+    { title: "Rush",               artist: "Ayra Starr",                genre: "Afropop",            url: "https://www.youtube.com/watch?v=LZ2FkIxnPIU" },
+    { title: "Houdini",            artist: "Eminem",                    genre: "Hip-Hop",            url: "https://www.youtube.com/watch?v=GFEGa-seZOU" },
+    { title: "Unavailable",        artist: "Davido ft. Musa Keys",      genre: "Afrobeats",          url: "https://www.youtube.com/watch?v=OTZ8x4WIj1A" },
+  ];
+
+  let currentSong = null;
+
+  function randomSong() {
+    const idx = Math.floor(Math.random() * songs.length);
+    return songs[idx];
+  }
+
+  function playSong(song) {
+    currentSong = song;
+    document.getElementById('song-title').textContent = '🎶 ' + song.title;
+    document.getElementById('song-artist').textContent = '👤 ' + song.artist;
+    document.getElementById('song-genre').textContent  = song.genre;
+    document.getElementById('song-title').setAttribute('data-url', song.url);
+
+    // Make title clickable to open YouTube
+    const titleEl = document.getElementById('song-title');
+    titleEl.style.cursor = 'pointer';
+    titleEl.onclick = () => window.open(song.url, '_blank');
+    titleEl.title = 'Click to open on YouTube';
+  }
+
+  function startMusic() {
+    document.getElementById('btn-group').style.display = 'none';
+    document.getElementById('decline-msg').style.display = 'none';
+    document.getElementById('player').style.display = 'block';
+    document.getElementById('visualizer').classList.remove('paused');
+
+    // Update prompt text
+    document.querySelector('.card h2').textContent = '🎶 Now Playing';
+    document.querySelector('.card p').textContent  = 'Click the song title to open it on YouTube!';
+
+    playSong(randomSong());
+  }
+
+  function nextSong() {
+    let next;
+    do { next = randomSong(); } while (next === currentSong && songs.length > 1);
+    playSong(next);
+  }
+
+  function stopMusic() {
+    document.getElementById('player').style.display = 'none';
+    document.getElementById('btn-group').style.display = 'flex';
+    document.getElementById('visualizer').classList.add('paused');
+    document.querySelector('.card h2').textContent = '🎵 Welcome!';
+    document.querySelector('.card p').textContent  = 'Hey there! Would you like to listen to some music while you\'re here?';
+  }
+
+  function declineMusic() {
+    document.getElementById('btn-group').style.display = 'none';
+    document.getElementById('decline-msg').style.display = 'block';
+  }
+</script>
+
+</body>
+      </html>
+      
